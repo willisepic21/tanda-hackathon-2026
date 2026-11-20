@@ -15,6 +15,12 @@ self.onmessage = ({ data }) => {
   }
   const tFold = performance.now();
 
+  // PoW-only job (classify mode): no folding unit.
+  if (!unit) {
+    postMessage({ type: 'done', nonce, result: null, totalMs: Math.round(tFold - t0), powMs: Math.round(tFold - t0) });
+    return;
+  }
+
   const result = solve(unit.sequence, unit.seed, unit.attempts, {
     progressEvery: 8192,
     onProgress: (p) =>

@@ -10,6 +10,7 @@ import { findPow } from '../shared/pow.js';
 test('full CAPTCHA + volunteer flow over HTTP', async (t) => {
   const config = {
     ...CONFIG,
+    citizen: { ...CONFIG.citizen, enabled: false },
     port: 0,
     attempts: { light: 3000, standard: 3000 },
     powBits: { desktop: 10, mobile: 8 },
@@ -67,6 +68,13 @@ test('full CAPTCHA + volunteer flow over HTTP', async (t) => {
   const stats = await (await fetch(`http://127.0.0.1:${config.port}/api/stats`)).json();
   assert.equal(stats.units.validated, 1);
   assert.equal(stats.stats.captchaPassed, 1);
+
+  // Open-data exports
+  const summary = await (await fetch(`http://127.0.0.1:${config.port}/api/data/summary.json`)).json();
+  assert.equal(summary.totals.validatedUnits, 1);
+  const csv = await (await fetch(`http://127.0.0.1:${config.port}/api/data/best-folds.csv`)).text();
+  assert.match(csv, /^benchmark,sequence/);
+  assert.equal(csv.trim().split('\n').length, 2);
 
   // Static files are served, path traversal is not.
   assert.equal((await fetch(`http://127.0.0.1:${config.port}/shared/hp.js`)).status, 200);

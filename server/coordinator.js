@@ -1,5 +1,5 @@
 import { BENCHMARKS, BENCHMARK_BY_ID } from '../shared/benchmarks.js';
-import { evaluateFold, mulberry32 } from '../shared/hp.js';
+import { evaluateFold, mulberry32, canonicalFold, SOLVER_VERSION } from '../shared/hp.js';
 
 /**
  * The coordinator hands out work units, collects results and decides which
@@ -13,7 +13,13 @@ import { evaluateFold, mulberry32 } from '../shared/hp.js';
  *
  * Validated units are later re-issued as "known-answer" spot checks: a device
  * that returns something different from the canonical result is caught.
+ *
+ * Every validated unit is emitted once via `onValidated(record)` (the server
+ * appends it to the permanent results archive) and folded into per-sequence
+ * aggregates in `state.science`.
  */
+
+const TOP_FOLDS = 12;
 
 const MAX_UNITS = 5000;
 const FEED_LEN = 60;
@@ -25,6 +31,8 @@ export function emptyState() {
     units: {},
     seedCounters: {},
     best: {}, // benchmarkId -> { fold, contacts, unitId, devices, at }
+    // benchmarkId -> { units, conformations, deadEnds, histogram[], topFolds[] }
+    science: {},
     feed: [],
     stats: {
       conformations: 0, // total chain-growth attempts computed by all devices
@@ -45,8 +53,9 @@ export function emptyState() {
 }
 
 export class Coordinator {
-  constructor(state, config, { rand = Math.random, now = Date.now } = {}) {
+  constructor(state, config, { rand = Math.random, now = Date.now, onValidated } = {}) {
     this.s = state;
+    this.onValidated = onValidated;
     this.cfg = config;
     this.rand = rand;
     this.now = now;
@@ -154,6 +163,7 @@ export class Coordinator {
       sequence: bench.sequence,
       seed,
       attempts: this.cfg.attempts[bench.tier],
+      solver: SOLVER_VERSION,
       status: 'open',
       created: this.now(),
       leases: {},
@@ -179,7 +189,8 @@ export class Coordinator {
   }
 
   publicUnit(unit) {
-    return { id: unit.id, benchmarkId: unit.benchmarkId, sequence: unit.sequence, seed: unit.seed, attempts: unit.attempts };
+    const b = BENCHMARK_BY_ID[unit.benchmarkId];
+    return { id: unit.id, benchmarkId: unit.benchmarkId, name: b?.name ?? unit.benchmarkId, amino: b?.amino ?? null, sequence: unit.sequence, seed: unit.seed, attempts: unit.attempts, solver: unit.solver };
   }
 
   // ---------------------------------------------------------------- result submission
@@ -218,7 +229,10 @@ export class Coordinator {
     this.s.stats.resultsAccepted++;
     this.s.stats.conformations += unit.attempts;
     this.s.stats.cpuMs += ms;
-    const record = { deviceId, ip, key, fold: result.fold, contacts: result.contacts, checksum: result.checksum, ms, at: t };
+    const record = {
+      deviceId, ip, key, ms, at: t,
+      fold: result.fold, contacts: result.contacts, checksum: result.checksum, dead: result.dead, histogram: result.histogram,
+    };
 
     // Known-answer spot check: the canonical result is already established.
     if (unit.status === 'validated') {
@@ -256,6 +270,7 @@ export class Coordinator {
   /** Cheap structural checks. Anything failing here is provably wrong, no replica needed. */
   checkResult(unit, r) {
     if (!r || typeof r !== 'object') return 'missing result';
+    if (r.solver !== unit.solver) return `solver version ${r.solver} does not match unit (${unit.solver}); reload the page`;
     if (typeof r.fold !== 'string') return 'missing fold';
     if (!Number.isInteger(r.contacts) || r.contacts < 0) return 'bad contact count';
     if (typeof r.checksum !== 'string' || !/^[0-9a-f]{8}$/.test(r.checksum)) return 'bad checksum';
@@ -281,11 +296,10 @@ export class Coordinator {
 
     if (winner) {
       const [key] = winner;
-      const sample = unit.results.find((r) => r.key === key);
       unit.status = 'validated';
       unit.validatedAt = this.now();
       unit.leases = {};
-      unit.canonical = { key, fold: sample.fold, contacts: sample.contacts, checksum: sample.checksum };
+      unit.canonical = parseKey(key);
       this.s.stats.unitsValidated++;
       for (const r of unit.results) {
         const dev = this.device(r.deviceId);
@@ -294,7 +308,8 @@ export class Coordinator {
       }
       const agreeing = unit.results.filter((r) => r.key === key).map((r) => r.deviceId);
       this.updateBest(unit, agreeing);
-      this.pushFeed({ type: 'validated', unitId: unit.id, contacts: sample.contacts, devices: agreeing });
+      this.recordScience(unit);
+      this.pushFeed({ type: 'validated', unitId: unit.id, contacts: unit.canonical.contacts, devices: agreeing });
     } else if (trusted.length >= this.cfg.maxReplicas) {
       unit.status = 'inconclusive';
       unit.leases = {};
@@ -313,6 +328,85 @@ export class Coordinator {
       this.s.best[unit.benchmarkId] = { fold, contacts, unitId: unit.id, devices, at: this.now() };
       this.pushFeed({ type: 'new-best', unitId: unit.id, benchmarkId: unit.benchmarkId, contacts });
     }
+  }
+
+  /** Emit a validated unit's archive record, then fold it into the per-sequence aggregates. */
+  recordScience(unit) {
+    const rec = this.archiveRecord(unit);
+    this.onValidated?.(rec);
+    unit.archived = true;
+    this.addToScience(rec);
+  }
+
+  addToScience(rec) {
+    const sci = (this.s.science[rec.benchmark] ||= { units: 0, conformations: 0, deadEnds: 0, histogram: [], topFolds: [] });
+    sci.units++;
+    sci.conformations += rec.attempts;
+    sci.deadEnds += rec.dead_ends;
+    rec.histogram.forEach((v, i) => (sci.histogram[i] = (sci.histogram[i] || 0) + v));
+
+    const hit = sci.topFolds.find((f) => f.fold === rec.best_fold_canonical);
+    if (hit) hit.foundBy++;
+    else sci.topFolds.push({ fold: rec.best_fold_canonical, contacts: rec.contacts, unitId: rec.unit, foundBy: 1, at: Date.parse(rec.validated_at) });
+    sci.topFolds.sort((a, b) => b.contacts - a.contacts || b.foundBy - a.foundBy || a.at - b.at);
+    sci.topFolds.length = Math.min(sci.topFolds.length, TOP_FOLDS);
+  }
+
+  /** The archive is the source of truth: aggregates are recomputed from it on startup. */
+  rebuildScience(records) {
+    this.s.science = {};
+    const seen = new Set();
+    for (const rec of records) {
+      if (seen.has(rec.unit)) continue;
+      seen.add(rec.unit);
+      this.addToScience(rec);
+      if (this.s.units[rec.unit]) this.s.units[rec.unit].archived = true;
+    }
+  }
+
+  /** One self-contained, reproducible line of the public dataset. */
+  archiveRecord(unit) {
+    const c = unit.canonical;
+    return {
+      schema: 'foldpass.validated.v1',
+      unit: unit.id,
+      benchmark: unit.benchmarkId,
+      sequence: unit.sequence,
+      lattice: '2D-square',
+      energy_model: 'HP (E = -1 per non-bonded H-H contact)',
+      solver: unit.solver,
+      seed: unit.seed,
+      attempts: unit.attempts,
+      best_fold: c.fold,
+      best_fold_canonical: canonicalFold(c.fold),
+      contacts: c.contacts,
+      energy: -c.contacts,
+      histogram: c.histogram,
+      dead_ends: c.dead,
+      checksum: c.checksum,
+      replicas: unit.results
+        .filter((r) => r.key === c.key)
+        .map((r) => ({ device: r.deviceId, compute_ms: r.ms, submitted_at: new Date(r.at).toISOString() })),
+      disagreeing_replicas: unit.results.filter((r) => r.key !== c.key).length,
+      validated_at: new Date(unit.validatedAt).toISOString(),
+    };
+  }
+
+  /**
+   * Units validated before the archive existed: rebuild their fingerprint from
+   * the result key and archive them, so no validated work is lost.
+   */
+  backfillArchive() {
+    let n = 0;
+    for (const unit of Object.values(this.s.units)) {
+      unit.solver ||= SOLVER_VERSION;
+      if (unit.status !== 'validated' || unit.archived) continue;
+      unit.validatedAt ||= unit.created;
+      unit.canonical = parseKey(unit.canonical.key);
+      this.recordScience(unit);
+      n++;
+    }
+    return n;
   }
 
   pushFeed(ev) {
@@ -351,7 +445,7 @@ export class Coordinator {
         bestKnown: b.bestKnown,
         tier: b.tier,
         best: this.s.best[b.id] ? { ...this.s.best[b.id], devices: this.s.best[b.id].devices.map(short) } : null,
-        validatedUnits: units.filter((u) => u.benchmarkId === b.id && u.status === 'validated').length,
+        validatedUnits: this.s.science[b.id]?.units ?? 0,
       })),
       recentUnits,
       feed: this.s.feed.slice(0, 25).map((e) => ({ ...e, deviceId: e.deviceId && short(e.deviceId), devices: e.devices?.map(short) })),
@@ -366,6 +460,12 @@ export class Coordinator {
 /** Two results "agree" only if every field of the deterministic fingerprint matches. */
 export function resultKey(r) {
   return `${r.fold}|${r.contacts}|${r.checksum}|${r.dead}|${r.histogram.join(',')}`;
+}
+
+/** The key encodes the whole fingerprint, so the canonical result can always be rebuilt from it. */
+export function parseKey(key) {
+  const [fold, contacts, checksum, dead, hist] = key.split('|');
+  return { key, fold, contacts: Number(contacts), checksum, dead: Number(dead), histogram: hist.split(',').map(Number) };
 }
 
 const short = (id) => String(id).slice(0, 6);

@@ -29,8 +29,29 @@ export const CONFIG = {
   passTtlMs: 2 * 60_000,
 
   // site key -> secret. The host site's backend calls /api/siteverify with the secret.
+  // `origins`: hostnames allowed to request challenges with this key (empty = any).
   sites: {
-    'demo-site-key': { secret: env.DEMO_SITE_SECRET || 'demo-secret-change-me', name: 'FoldPass demo' },
+    'demo-site-key': { secret: env.DEMO_SITE_SECRET || 'demo-secret-change-me', name: 'FoldPass demo', origins: [] },
+    'locked-site-key': { secret: 'locked-secret', name: 'Origin-locked example', origins: ['example.com'] },
+  },
+
+  // --- Citizen-science human tasks (Zooniverse) ---
+  // Default: SquirrelMapper, "How many squirrels are in this image?" (0 / 1 / 2 or more).
+  citizen: {
+    enabled: env.CITIZEN !== '0',
+    api: 'https://www.zooniverse.org/api',
+    project: Number(env.ZOONIVERSE_PROJECT || 8149),
+    workflow: Number(env.ZOONIVERSE_WORKFLOW || 30253),
+    task: env.ZOONIVERSE_TASK || 'T0',
+    poolSize: 30, // keep this many subjects that still need answers
+    retireAfter: 5, // counted answers before a subject can reach consensus
+    consensus: 0.8, // agreement needed to become a known-answer subject
+    maxVotes: 10, // give up ("ambiguous") after this many without consensus
+    bootstrap: true, // count answers while no known-answer subjects exist yet
+    minHumanMs: 1500, // faster than this from challenge to answer = not a human
+    // Sending answers to Zooniverse. Needs written permission from Zooniverse
+    // and the project team, plus a bearer token for an account they approved.
+    forward: { enabled: env.ZOONIVERSE_FORWARD === '1', token: env.ZOONIVERSE_TOKEN || '' },
   },
 
   // Requests per minute per IP.

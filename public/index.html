@@ -3,69 +3,182 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FoldPass — a CAPTCHA that folds proteins</title>
+  <title>FoldPass: a CAPTCHA that puts the work to use</title>
+  <meta name="description" content="FoldPass checks that visitors are human and puts the effort toward citizen science and protein-folding research." />
   <link rel="stylesheet" href="/css/site.css" />
-  <script type="module" src="/widget/fold-captcha.js"></script>
+  <script type="module" src="/sdk/foldpass.esm.js"></script>
 </head>
 <body>
-  <nav class="nav">
-    <a class="brand" href="/"><span class="dots"><i></i><i></i><i></i></span>FoldPass</a>
-    <a class="link" href="/" aria-current="page">Demo</a>
-    <a class="link" href="/dashboard">Live dashboard</a>
-    <a class="link" href="/volunteer">Volunteer</a>
-    <span class="spacer"></span>
-    <span class="pill">proof of concept</span>
-  </nav>
+  <header class="site-header">
+    <div class="inner">
+      <a class="wordmark" href="/" aria-label="FoldPass home">
+        <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true"><path d="M6 22 V14 H14 V6 H22 V14" fill="none" stroke="#1f2429" stroke-width="2" stroke-linejoin="round" opacity=".4"/><circle cx="6" cy="22" r="3.4" fill="#e4572e"/><circle cx="6" cy="14" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="14" cy="14" r="3.4" fill="#e4572e"/><circle cx="14" cy="6" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="22" cy="6" r="3.4" fill="#e4572e"/><circle cx="22" cy="14" r="3.4" fill="#e4572e"/></svg>
+        FoldPass
+      </a>
+      <nav aria-label="Main">
+        <a href="/" aria-current="page">Overview</a>
+        <a href="/dashboard">Network</a>
+        <a href="/volunteer">Contribute</a>
+        <a href="/data">Data</a>
+      </nav>
+    </div>
+  </header>
 
   <main>
     <section class="hero">
       <div>
-        <h1>Prove you're human by folding a protein.</h1>
+        <h1>A CAPTCHA that puts the work to use</h1>
         <p class="lede">
-          FoldPass replaces "click every traffic light" with a second or two of real computation:
-          a search for low-energy folds of an HP lattice protein. Every result is computed
-          independently by <b>two devices</b> and only counts when they match bit-for-bit.
+          FoldPass checks visitors like any other CAPTCHA, then uses the effort for research. Visitors answer a
+          question from a citizen-science project, or their device runs a short protein-folding search.
+          Every result is checked before it is kept.
         </p>
-        <ol class="steps">
-          <li><span><b>Challenge.</b> The server sends a signed work unit (sequence, seed, attempts) and a small proof-of-work puzzle.</span></li>
-          <li><span><b>Compute.</b> A Web Worker solves the puzzle and runs a deterministic Monte-Carlo folding search.</span></li>
-          <li><span><b>Verify.</b> The server checks the fold in microseconds: no self-collisions, correct H–H contact count, consistent energy histogram.</span></li>
-          <li><span><b>Replicate.</b> The same unit goes to a second device. Matching results are validated; mismatches go to a tie-breaker and cost the liar trust.</span></li>
-          <li><span><b>Pass.</b> The host site's backend redeems a one-time signed token via <code>/api/siteverify</code>.</span></li>
-        </ol>
-        <p class="muted small" style="margin-top:22px">
-          Honest caveat: a few seconds per CAPTCHA is a tiny amount of science, and bots have cheap CPUs.
-          The PoW and rate limits are the bot gate. The folding is a bonus, kept honest by replication and known-answer spot checks.
-        </p>
+        <div class="actions">
+          <a class="btn" href="#integrate">Add it to your site</a>
+          <a class="btn secondary" href="/data">See the results</a>
+        </div>
       </div>
 
-      <div class="panel">
-        <h2>Create an account <span class="muted small">(demo site)</span></h2>
-        <form class="signup" id="signup">
-          <label class="field">Email <input type="email" name="email" required placeholder="you@example.com" autocomplete="email" /></label>
-          <label class="field">Password <input type="password" name="password" required minlength="4" autocomplete="new-password" /></label>
-          <fold-captcha site-key="demo-site-key"></fold-captcha>
-          <div class="legend"><span><i class="h"></i>hydrophobic (H)</span><span><i class="p"></i>polar (P)</span><span><i class="c"></i>H–H contact</span></div>
-          <button class="btn" type="submit" disabled>Sign up</button>
-          <div id="result" class="notice" hidden></div>
-        </form>
+      <div class="browser" aria-label="Example sign-up page using FoldPass">
+        <div class="bar"><i></i><i></i><i></i><span>acme.example/signup</span></div>
+        <div class="page">
+          <h2>Create your account</h2>
+          <form class="signup" id="signup" novalidate>
+            <label class="field">Email <input type="email" name="email" required autocomplete="email" /></label>
+            <label class="field">Password <input type="password" name="password" required minlength="4" autocomplete="new-password" /></label>
+            <fieldset>
+              <legend>Challenge type for this demo</legend>
+              <div class="choice">
+                <label><input type="radio" name="task" value="classify" checked /> Research photo</label>
+                <label><input type="radio" name="task" value="fold" /> Protein folding</label>
+              </div>
+            </fieldset>
+            <fold-captcha site-key="demo-site-key" task="classify"></fold-captcha>
+            <button class="btn" type="submit" disabled>Create account</button>
+            <div id="result" class="notice" role="status" hidden></div>
+          </form>
+        </div>
       </div>
+    </section>
+
+    <section aria-labelledby="how">
+      <h2 id="how">How a check works</h2>
+      <ol class="steps">
+        <li>
+          <h3>The visitor checks the box</h3>
+          <p>FoldPass sends a signed challenge: a photo from a research project, or a protein-folding work unit, plus a small proof-of-work.</p>
+        </li>
+        <li>
+          <h3>Their browser does the work</h3>
+          <p>The proof-of-work runs in the background while the visitor answers the photo question, or while their device runs the fold search.</p>
+        </li>
+        <li>
+          <h3>The answer is checked</h3>
+          <p>Each photo check includes one photo with a known answer. Fold results are checked in microseconds and repeated on a second device.</p>
+        </li>
+        <li>
+          <h3>Your server confirms the pass</h3>
+          <p>Your backend sends the token and your secret to <code>/api/siteverify</code>. Each token works once, for two minutes.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="integrate" aria-labelledby="integrate-h" class="split">
+      <div>
+        <h2 id="integrate-h">Add it to your site</h2>
+        <p class="muted">One script tag and one element. Your server then confirms each token before it accepts the form.</p>
+        <ul class="facts">
+          <li><b>Works with any backend</b>Verification is one HTTP request. A Node helper with Express middleware is included.</li>
+          <li><b>Locked to your domain</b>Site keys can be limited to your hostnames, and every verification reports where the check ran.</li>
+          <li><b>Invisible mode and donations</b><code>FoldPass.execute()</code> runs a check with no widget. <code>FoldPass.volunteer()</code> lets visitors who opt in donate spare CPU.</li>
+        </ul>
+      </div>
+      <pre class="code"><span class="c">&lt;!-- In the page --&gt;</span>
+&lt;script src="https://foldpass.example/sdk/foldpass.js" async defer&gt;&lt;/script&gt;
+
+&lt;form action="/signup" method="post"&gt;
+  …
+  &lt;div class="foldpass" data-sitekey="YOUR_SITE_KEY"
+       data-task="classify"&gt;&lt;/div&gt;
+&lt;/form&gt;
+
+<span class="c">// On your server</span>
+const r = await fetch('https://foldpass.example/api/siteverify', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ token, secret: process.env.FOLDPASS_SECRET }),
+}).then((res) => res.json());
+
+if (!r.success) return reject(r.reason);</pre>
+    </section>
+
+    <section aria-labelledby="work-h" class="specimen">
+      <figure>
+        <canvas id="specimen" aria-label="Best validated fold"></canvas>
+        <figcaption id="specimenCaption">Loading the network's best fold…</figcaption>
+      </figure>
+      <div>
+        <h2 id="work-h">Where the work goes</h2>
+        <p>
+          Photo answers go to <a href="https://www.zooniverse.org/projects/bcosentino/squirrelmapper" target="_blank" rel="noopener">SquirrelMapper</a>,
+          a Zooniverse project studying how city squirrels evolve. A photo's answer is only trusted once several
+          verified visitors agree on it.
+        </p>
+        <p>
+          Fold results are computed independently on two devices and kept only when they match bit for bit.
+          Each kept result is added to an open dataset that anyone can download and re-run.
+        </p>
+        <div class="fold-key" aria-label="Fold key">
+          <span><i class="h"></i>Hydrophobic residue</span><span><i class="p"></i>Polar residue</span><span><i class="c"></i>Contact between hydrophobic residues</span>
+        </div>
+        <p style="margin-top:14px"><a href="/data">Browse and download the results</a></p>
+      </div>
+    </section>
+
+    <section id="privacy" aria-labelledby="privacy-h">
+      <h2 id="privacy-h">Privacy</h2>
+      <p style="max-width:68ch">
+        FoldPass keeps one anonymous device ID in the browser's local storage, separately for each site that uses it. It sets
+        no cookies and does no fingerprinting. Published data replaces device IDs with a one-way hash. Research photos
+        load directly from iNaturalist and Zooniverse.
+      </p>
     </section>
   </main>
 
+  <footer class="site-footer">
+    <div class="inner">
+      <span>FoldPass is a prototype built for the Tanda hackathon. Results are released under CC0.</span>
+      <a href="/data">Data</a>
+      <a href="#privacy">Privacy</a>
+    </div>
+  </footer>
+
   <script type="module">
+    import { FoldAnimator } from '/js/fold-render.js';
+
     const form = document.getElementById('signup');
     const btn = form.querySelector('button[type=submit]');
     const out = document.getElementById('result');
-    const captcha = form.querySelector('fold-captcha');
-    captcha.addEventListener('solved', () => (btn.disabled = false));
-    captcha.addEventListener('expired', () => (btn.disabled = true));
+
+    form.addEventListener('solved', () => (btn.disabled = false));
+    form.addEventListener('expired', () => (btn.disabled = true));
+    form.addEventListener('change', (e) => {
+      if (e.target.name !== 'task') return;
+      const el = document.createElement('fold-captcha');
+      el.setAttribute('site-key', 'demo-site-key');
+      el.setAttribute('task', e.target.value);
+      form.querySelector('fold-captcha').replaceWith(el);
+      btn.disabled = true;
+      out.hidden = true;
+      const hidden = form.querySelector('input[name="fold-captcha-token"]');
+      if (hidden) hidden.value = '';
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       btn.disabled = true;
       const data = new FormData(form);
-      // The form posts to the host site's backend, which calls /api/siteverify.
+      // The form goes to the site's own backend, which calls /api/siteverify.
       const r = await fetch('/demo/signup', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -73,9 +186,32 @@
       });
       const j = await r.json();
       out.hidden = false;
-      out.className = 'notice ' + (j.ok ? 'ok' : 'err');
+      out.className = 'notice' + (j.ok ? '' : ' err');
       out.textContent = j.message;
     });
+
+    // Draw the longest sequence the network has a validated fold for.
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then((d) => {
+        const b = d.benchmarks.filter((x) => x.best).sort((x, y) => y.sequence.length - x.sequence.length)[0];
+        const caption = document.getElementById('specimenCaption');
+        if (!b) {
+          caption.textContent = 'No validated folds yet.';
+          return;
+        }
+        // Start as a straight chain and fold it the first time it scrolls into view.
+        const canvas = document.getElementById('specimen');
+        const anim = new FoldAnimator(canvas, b.sequence, { maxCell: 22, duration: 1600 });
+        new IntersectionObserver((entries, obs) => {
+          if (!entries[0].isIntersecting) return;
+          obs.disconnect();
+          setTimeout(() => anim.setFold(b.best.fold), 250);
+        }, { threshold: 0.6 }).observe(canvas);
+        const known = b.bestKnown ? `, against a best known of ${b.bestKnown}` : '';
+        caption.textContent = `${b.name}, ${b.sequence.length} residues: ${b.best.contacts} hydrophobic contacts${known}. Agreed by two devices.`;
+      })
+      .catch(() => (document.getElementById('specimenCaption').textContent = 'Could not load the network status.'));
   </script>
 </body>
 </html>

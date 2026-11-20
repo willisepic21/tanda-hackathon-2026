@@ -10,6 +10,8 @@
 // produce bit-identical output. That is what makes 2-device replication work.
 
 export const DIR_CHARS = 'RULD';
+/** Bump whenever solver output could change: results are only comparable within one version. */
+export const SOLVER_VERSION = 'chaingrowth-1';
 const DX = [1, 0, -1, 0];
 const DY = [0, 1, 0, -1];
 export const MAX_LEN = 128;
@@ -162,12 +164,27 @@ export function solve(sequence, seed, attempts, { onProgress, progressEvery = 40
   let last = hist.length - 1;
   while (last > 0 && hist[last] === 0) last--;
   return {
+    solver: SOLVER_VERSION,
     fold: best >= 0 ? dirsToFold(bestDirs) : null,
     contacts: best,
     histogram: hist.slice(0, last + 1),
     dead,
     checksum: checksum.toString(16).padStart(8, '0'),
   };
+}
+
+/**
+ * Canonical form of a fold, so mirror images count as one structure: rotate so
+ * the first move is R, then reflect so the first turn off the x-axis is U.
+ */
+export function canonicalFold(fold) {
+  if (!fold) return fold;
+  const rot = DIR_CHARS.indexOf(fold[0]);
+  let out = '';
+  for (const ch of fold) out += DIR_CHARS[(DIR_CHARS.indexOf(ch) - rot + 4) % 4];
+  const firstTurn = out.search(/[UD]/);
+  if (firstTurn >= 0 && out[firstTurn] === 'D') out = out.replace(/[UD]/g, (c) => (c === 'U' ? 'D' : 'U'));
+  return out;
 }
 
 function dirsToFold(dirs) {

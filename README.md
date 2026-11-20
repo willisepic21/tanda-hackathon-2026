@@ -14,6 +14,7 @@ npm test
 | `/` | Demo sign-up form with the `<fold-captcha>` widget, verified by a "host backend" |
 | `/volunteer` | Continuous donation mode. Open it on every phone and laptop you have |
 | `/dashboard` | Live stats, 2-device replication table, best validated folds, device trust, bot economics |
+| `/data` | Where results go: downloads, per-sequence energy histograms, top distinct folds, example record |
 
 To demo 2-device validation on **one machine**, open `/volunteer?simulate`, which gives each thread its own device identity. To use **real devices**, open the LAN URL that the server prints on startup on other phones and laptops on the same Wi-Fi.
 
@@ -59,26 +60,22 @@ Replication catches the cheat that layer 1 can't. A device could run 1% of the a
 - Standard 2D HP benchmarks S1–S8 (20–64 residues) with published best-known energies, so the dashboard can show how close the network gets.
 - Fragments of **KRAS** (1–40, covering the G12/G13 hotspots) and **TP53** (94–155), mapped to HP by hydrophobicity. These are illustrative: the HP model is a coarse abstraction, not a drug-discovery pipeline.
 
+## Citizen-science mode
+
+The CAPTCHA can instead ask a real research question: a photo from the live SquirrelMapper project on Zooniverse, "How many squirrels are in this image?". It works reCAPTCHA-style (one known-answer photo, one that needs answers). Answers are aggregated and exported; sending them to Zooniverse is off until the project approves it. Use `data-task="classify"` or `task="classify"`. See [CITIZEN.md](CITIZEN.md).
+
+## Results data
+
+Every validated unit is appended to `data/results/validated.jsonl`: a permanent, reproducible, CC0 dataset with device IDs hashed. You can download it from `/data` or `/api/data/*`, and re-check it with `npm run reproduce`. [DATA.md](DATA.md) covers the schema, trust model, limitations and how to publish it.
+
 ## Embedding on another site
 
 ```html
-<script type="module" src="https://YOUR-FOLDPASS-HOST/widget/fold-captcha.js"></script>
-<form method="post" action="/signup">
-  …
-  <fold-captcha site-key="demo-site-key"></fold-captcha>   <!-- adds hidden input fold-captcha-token -->
-</form>
+<script src="https://YOUR-FOLDPASS-HOST/sdk/foldpass.js" async defer></script>
+<div class="foldpass" data-sitekey="demo-site-key" data-callback="onFolded"></div>
 ```
 
-Your backend then makes this call:
-
-```bash
-curl -X POST https://YOUR-FOLDPASS-HOST/api/siteverify \
-  -H 'content-type: application/json' \
-  -d '{"token":"<fold-captcha-token>","secret":"<your site secret>"}'
-# → {"success":true,"siteKey":"demo-site-key","unitId":"S3-25.4"}
-```
-
-Pass tokens expire after 2 minutes and can only be redeemed once. Site keys and secrets live in `server/config.js`. Set `DEMO_SITE_SECRET` in production.
+The browser SDK supports a visible widget, invisible `FoldPass.execute()` and opt-in `FoldPass.volunteer()` donation. `sdk/node/foldpass-server.js` verifies tokens on your backend. See [SDK.md](SDK.md) for the full reference and `examples/third-party/` for a working site on a separate origin.
 
 ## API
 
@@ -92,6 +89,9 @@ Pass tokens expire after 2 minutes and can only be redeemed once. Site keys and 
 | `POST /api/result` | `{lease, result}` | Volunteer: submit a result |
 | `GET /api/stats` | | Dashboard data |
 | `GET /api/units?id=S1-20.3` | | Every replica of one unit |
+| `GET /api/data/validated.jsonl` | `?benchmark=…&download` | The results archive (NDJSON) |
+| `GET /api/data/best-folds.csv` | | Best distinct folds per sequence |
+| `GET /api/data/summary.json` | | Dataset card + per-sequence aggregates |
 
 ## Config (env)
 
@@ -108,7 +108,10 @@ Pass tokens expire after 2 minutes and can only be redeemed once. Site keys and 
 
 ```
 shared/   hp.js (model, verifier, deterministic solver) · pow.js (pure-JS SHA-256) · benchmarks.js
-server/   index.js · app.js (HTTP + API) · coordinator.js (scheduling, quorum, trust) · tokens.js · store.js · config.js
-public/   widget/ (fold-captcha.js, worker.js) · js/ (client, fold-render, dashboard, volunteer) · *.html
+server/   index.js · app.js (HTTP + API) · coordinator.js (scheduling, quorum, trust) · archive.js (results dataset) · tokens.js · store.js · config.js
+sdk/node/ foldpass-server.js (backend token verification)
+examples/ third-party/ (example site on its own origin)
+scripts/  reproduce.js (re-run archived units, verify fingerprints)
+public/   sdk/ (foldpass.js loader, foldpass.esm.js, foldpass.d.ts) · widget/ (worker.js) · js/ (client, fold-render, dashboard, volunteer, data) · *.html
 test/     node:test suites for the model, the coordinator and the HTTP flow
 ```

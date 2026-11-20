@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Acme Gardening: FoldPass SDK example</title>
+  <!-- 1. Load the SDK from the FoldPass host. That's the only script tag you need. -->
+  <script src="{{FOLDPASS}}/sdk/foldpass.js" async defer></script>
+  <style>
+    body { font: 16px/1.5 Georgia, serif; background: #f7f5ef; color: #222; margin: 0; }
+    header { background: #2f5d3a; color: #fff; padding: 18px 32px; font-size: 22px; }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 24px; }
+    section { background: #fff; border: 1px solid #e1ddd0; border-radius: 10px; padding: 20px; }
+    h2 { font-size: 18px; margin: 0 0 4px; }
+    p.hint { font: 13px system-ui, sans-serif; color: #777; margin: 0 0 14px; }
+    input { display: block; width: 100%; box-sizing: border-box; padding: 9px; margin: 0 0 12px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
+    button { background: #2f5d3a; color: #fff; border: 0; border-radius: 6px; padding: 10px 16px; font: 600 14px system-ui, sans-serif; cursor: pointer; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .out { font: 13px system-ui, sans-serif; margin-top: 12px; padding: 8px 10px; border-radius: 6px; background: #f1f4ee; min-height: 1.4em; }
+    code { font-size: 12px; background: #f0ede4; padding: 1px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <header>🌱 Acme Gardening <small style="font-size:13px;opacity:.7">(a third-party site on its own origin)</small></header>
+  <main>
+    <section>
+      <h2>A. Declarative widget</h2>
+      <p class="hint">Markup only, light theme, <code>data-task="classify"</code>: a real Zooniverse photo question.</p>
+      <form id="signup">
+        <input type="email" name="email" placeholder="you@example.com" required />
+        <div class="foldpass" data-sitekey="demo-site-key" data-theme="light" data-task="classify" data-callback="onFolded" data-expired-callback="onFoldExpired"></div>
+        <p></p>
+        <button type="submit" id="signupBtn" disabled>Create account</button>
+        <div class="out" id="signupOut"></div>
+      </form>
+    </section>
+
+    <section>
+      <h2>B. Invisible mode</h2>
+      <p class="hint">No widget. <code>FoldPass.execute()</code> runs in the background when the button is pressed.</p>
+      <input type="email" id="newsEmail" placeholder="newsletter@example.com" />
+      <button id="subscribe">Subscribe</button>
+      <div class="out" id="newsOut"></div>
+    </section>
+
+    <section>
+      <h2>C. Opt-in compute donation</h2>
+      <p class="hint">Nothing runs until the visitor clicks. Pauses on low battery.</p>
+      <label style="font:14px system-ui"><input type="checkbox" id="donate" style="display:inline;width:auto;margin:0 6px 0 0" />Donate my idle CPU to protein-folding research while this tab is open</label>
+      <div class="out" id="donateOut">Not donating.</div>
+    </section>
+  </main>
+
+  <script>
+    // --- A. declarative widget callbacks (global functions named in data-*)
+    function onFolded(token, unit) {
+      document.getElementById('signupBtn').disabled = false;
+    }
+    function onFoldExpired() {
+      document.getElementById('signupBtn').disabled = true;
+    }
+    async function postJSON(url, body) {
+      const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      return r.json();
+    }
+    document.getElementById('signup').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = new FormData(e.target).get('fold-captcha-token');
+      const j = await postJSON('/signup', { token });
+      document.getElementById('signupOut').textContent = j.message;
+    });
+
+    // --- B. invisible mode
+    document.getElementById('subscribe').addEventListener('click', async (e) => {
+      const out = document.getElementById('newsOut');
+      e.target.disabled = true;
+      out.textContent = 'Checking you are human (≈1 s)…';
+      try {
+        const token = await FoldPass.execute({ siteKey: 'demo-site-key' });
+        out.textContent = (await postJSON('/subscribe', { token })).message;
+      } catch (err) {
+        out.textContent = `FoldPass error (${err.code}): ${err.message}`;
+      } finally {
+        e.target.disabled = false;
+      }
+    });
+
+    // --- C. opt-in volunteer compute
+    let donor = null;
+    document.getElementById('donate').addEventListener('change', async (e) => {
+      const out = document.getElementById('donateOut');
+      donor ||= await FoldPass.volunteer({
+        threads: 1,
+        onStatus: (s) => {
+          out.textContent = s.running
+            ? `${s.paused ? 'Paused (battery)' : 'Donating'} · ${s.units} units · ${s.conformations.toLocaleString()} conformations · ${s.validated} validated`
+            : `Stopped · ${s.units} units donated.`;
+        },
+      });
+      e.target.checked ? donor.start() : donor.stop();
+    });
+  </script>
+</body>
+</html>

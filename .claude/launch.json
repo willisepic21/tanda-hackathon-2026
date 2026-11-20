@@ -4,8 +4,20 @@
     {
       "name": "foldpass",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["server/index.js"],
+      "runtimeArgs": [
+        "server/index.js"
+      ],
       "port": 8080
+    },
+    {
+      "name": "example-site",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "examples/third-party/server.js",
+        "http://localhost:8081",
+        "5173"
+      ],
+      "port": 5173
     }
   ]
 }

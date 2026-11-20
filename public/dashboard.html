@@ -3,56 +3,80 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FoldPass — live dashboard</title>
+  <title>Network status | FoldPass</title>
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
-  <nav class="nav">
-    <a class="brand" href="/"><span class="dots"><i></i><i></i><i></i></span>FoldPass</a>
-    <a class="link" href="/">Demo</a>
-    <a class="link" href="/dashboard" aria-current="page">Live dashboard</a>
-    <a class="link" href="/volunteer">Volunteer</a>
-    <span class="spacer"></span>
-    <span class="pill" id="live"><span class="dot"></span> connecting…</span>
-  </nav>
+  <header class="site-header">
+    <div class="inner">
+      <a class="wordmark" href="/" aria-label="FoldPass home">
+        <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true"><path d="M6 22 V14 H14 V6 H22 V14" fill="none" stroke="#1f2429" stroke-width="2" stroke-linejoin="round" opacity=".4"/><circle cx="6" cy="22" r="3.4" fill="#e4572e"/><circle cx="6" cy="14" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="14" cy="14" r="3.4" fill="#e4572e"/><circle cx="14" cy="6" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="22" cy="6" r="3.4" fill="#e4572e"/><circle cx="22" cy="14" r="3.4" fill="#e4572e"/></svg>
+        FoldPass
+      </a>
+      <nav aria-label="Main">
+        <a href="/">Overview</a>
+        <a href="/dashboard" aria-current="page">Network</a>
+        <a href="/volunteer">Contribute</a>
+        <a href="/data">Data</a>
+      </nav>
+    </div>
+  </header>
 
   <main>
-    <div class="tiles" id="tiles"></div>
-
-    <div class="cols">
-      <section class="panel">
-        <h2>Two-device replication</h2>
-        <p class="muted small" style="margin-top:-6px">Each unit is solved by two devices. It's validated only when both return the same fold, energy histogram and checksum.</p>
-        <table>
-          <thead><tr><th>Unit</th><th>Replica 1</th><th>Replica 2</th><th>Status</th></tr></thead>
-          <tbody id="units"><tr><td colspan="4" class="muted">No results yet. Solve a CAPTCHA or start a volunteer.</td></tr></tbody>
-        </table>
-      </section>
-      <section class="panel">
-        <h2>Live feed</h2>
-        <ul class="feed" id="feed"></ul>
-      </section>
+    <div class="page-head section-head">
+      <h1 style="margin:0">Network status</h1>
+      <span class="live" id="live"><span class="dot"></span> Connecting</span>
     </div>
 
-    <section style="margin-top:22px">
-      <h2>Best validated folds <span class="legend" style="display:inline-flex;margin-left:12px"><span><i class="h"></i>H</span><span><i class="p"></i>P</span><span><i class="c"></i>contact</span></span></h2>
+    <dl class="figures" id="figures"></dl>
+
+    <section class="two-col">
+      <div>
+        <div class="section-head">
+          <h2>Replication</h2>
+          <p>Each work unit runs on two devices and is kept only when both results match.</p>
+        </div>
+        <table>
+          <thead><tr><th>Unit</th><th>First device</th><th>Second device</th><th>Status</th></tr></thead>
+          <tbody id="units"><tr><td colspan="4" class="muted">No results yet. Pass a CAPTCHA or start contributing to see units here.</td></tr></tbody>
+        </table>
+      </div>
+      <div>
+        <div class="section-head"><h2>Activity</h2></div>
+        <ul class="log" id="feed"></ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Best validated folds</h2>
+        <p>The lowest-energy fold two devices have agreed on, for each sequence.</p>
+      </div>
       <div class="benches" id="benches"></div>
     </section>
 
-    <div class="cols">
-      <section class="panel">
-        <h2>Devices</h2>
+    <section class="two-col">
+      <div>
+        <div class="section-head"><h2>Devices</h2><p>Trust rises when a device agrees with others and falls when it doesn't.</p></div>
         <table>
-          <thead><tr><th></th><th>Device</th><th>Trust</th><th>Agreed</th><th>Disagreed</th><th>Rejected</th><th>Conformations</th></tr></thead>
+          <thead><tr><th>Device</th><th class="num">Trust</th><th class="num">Agreed</th><th class="num">Disagreed</th><th class="num">Rejected</th><th class="num">Conformations</th></tr></thead>
           <tbody id="devices"></tbody>
         </table>
-      </section>
-      <section class="panel">
-        <h2>Bot vs human cost</h2>
-        <div id="economics" class="small"></div>
-      </section>
-    </div>
+      </div>
+      <div>
+        <div class="section-head"><h2>Cost to a bot</h2></div>
+        <div id="economics"></div>
+      </div>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="inner">
+      <span>FoldPass is a prototype built for the Tanda hackathon. Results are released under CC0.</span>
+      <a href="/data">Data</a>
+      <a href="/#privacy">Privacy</a>
+    </div>
+  </footer>
 
   <script type="module" src="/js/dashboard.js"></script>
 </body>

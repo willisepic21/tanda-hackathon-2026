@@ -88,3 +88,45 @@ test('validated units are re-used as known-answer checks in captcha mode', () =>
   assert.equal(res.matched, false);
   assert.equal(c.s.stats.knownAnswerFailures, 1);
 });
+
+test('validated units are archived once and folded into per-sequence aggregates', () => {
+  const archived = [];
+  const c = new Coordinator(emptyState(), cfg, { rand: () => 0, onValidated: (r) => archived.push(r) });
+  const { unit } = c.assign('A');
+  const res = honest(unit);
+  c.submit('A', unit.id, res);
+  assert.equal(archived.length, 0);
+  c.assign('B');
+  c.submit('B', unit.id, honest(unit));
+  assert.equal(archived.length, 1);
+  const rec = archived[0];
+  assert.equal(rec.unit, unit.id);
+  assert.equal(rec.seed, unit.seed);
+  assert.deepEqual(rec.histogram, res.histogram);
+  assert.equal(rec.replicas.length, 2);
+  const sci = c.s.science[unit.benchmarkId];
+  assert.equal(sci.units, 1);
+  assert.equal(sci.conformations, unit.attempts);
+  assert.equal(sci.topFolds[0].contacts, res.contacts);
+  assert.equal(c.backfillArchive(), 0, 'nothing archived twice');
+});
+
+test('canonicalFold merges rotations and mirror images', async () => {
+  const { canonicalFold } = await import('../shared/hp.js');
+  assert.equal(canonicalFold('RDDL'), 'RUUL');
+  assert.equal(canonicalFold('URRD'), 'RDDL'.replace(/[UD]/g, (c) => (c === 'U' ? 'D' : 'U')));
+  assert.equal(canonicalFold('RRUL'), canonicalFold('RRDL'));
+});
+
+test('quorum completes even when an older replica record lacks the histogram', () => {
+  const archived = [];
+  const c = new Coordinator(emptyState(), cfg, { rand: () => 0, onValidated: (r) => archived.push(r) });
+  const { unit } = c.assign('A');
+  const res = honest(unit);
+  c.submit('A', unit.id, res);
+  delete unit.results[0].histogram; // record written by an older server version
+  delete unit.results[0].dead;
+  c.assign('B');
+  assert.equal(c.submit('B', unit.id, honest(unit)).status, 'validated');
+  assert.deepEqual(archived[0].histogram, res.histogram);
+});
