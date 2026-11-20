@@ -1,0 +1,12 @@
+{
+  "name": "foldpass",
+  "version": "0.1.0",
+  "description": "A CAPTCHA that donates compute to HP lattice protein folding, with 2-device result replication.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FoldPass — live dashboard</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="/"><span class="dots"><i></i><i></i><i></i></span>FoldPass</a>
+    <a class="link" href="/">Demo</a>
+    <a class="link" href="/dashboard" aria-current="page">Live dashboard</a>
+    <a class="link" href="/volunteer">Volunteer</a>
+    <span class="spacer"></span>
+    <span class="pill" id="live"><span class="dot"></span> connecting…</span>
+  </nav>
+
+  <main>
+    <div class="tiles" id="tiles"></div>
+
+    <div class="cols">
+      <section class="panel">
+        <h2>Two-device replication</h2>
+        <p class="muted small" style="margin-top:-6px">Each unit is solved by two devices. It's validated only when both return the same fold, energy histogram and checksum.</p>
+        <table>
+          <thead><tr><th>Unit</th><th>Replica 1</th><th>Replica 2</th><th>Status</th></tr></thead>
+          <tbody id="units"><tr><td colspan="4" class="muted">No results yet. Solve a CAPTCHA or start a volunteer.</td></tr></tbody>
+        </table>
+      </section>
+      <section class="panel">
+        <h2>Live feed</h2>
+        <ul class="feed" id="feed"></ul>
+      </section>
+    </div>
+
+    <section style="margin-top:22px">
+      <h2>Best validated folds <span class="legend" style="display:inline-flex;margin-left:12px"><span><i class="h"></i>H</span><span><i class="p"></i>P</span><span><i class="c"></i>contact</span></span></h2>
+      <div class="benches" id="benches"></div>
+    </section>
+
+    <div class="cols">
+      <section class="panel">
+        <h2>Devices</h2>
+        <table>
+          <thead><tr><th></th><th>Device</th><th>Trust</th><th>Agreed</th><th>Disagreed</th><th>Rejected</th><th>Conformations</th></tr></thead>
+          <tbody id="devices"></tbody>
+        </table>
+      </section>
+      <section class="panel">
+        <h2>Bot vs human cost</h2>
+        <div id="economics" class="small"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>

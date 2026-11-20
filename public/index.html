@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FoldPass — a CAPTCHA that folds proteins</title>
+  <link rel="stylesheet" href="/css/site.css" />
+  <script type="module" src="/widget/fold-captcha.js"></script>
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="/"><span class="dots"><i></i><i></i><i></i></span>FoldPass</a>
+    <a class="link" href="/" aria-current="page">Demo</a>
+    <a class="link" href="/dashboard">Live dashboard</a>
+    <a class="link" href="/volunteer">Volunteer</a>
+    <span class="spacer"></span>
+    <span class="pill">proof of concept</span>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div>
+        <h1>Prove you're human by folding a protein.</h1>
+        <p class="lede">
+          FoldPass replaces "click every traffic light" with a second or two of real computation:
+          a search for low-energy folds of an HP lattice protein. Every result is computed
+          independently by <b>two devices</b> and only counts when they match bit-for-bit.
+        </p>
+        <ol class="steps">
+          <li><span><b>Challenge.</b> The server sends a signed work unit (sequence, seed, attempts) and a small proof-of-work puzzle.</span></li>
+          <li><span><b>Compute.</b> A Web Worker solves the puzzle and runs a deterministic Monte-Carlo folding search.</span></li>
+          <li><span><b>Verify.</b> The server checks the fold in microseconds: no self-collisions, correct H–H contact count, consistent energy histogram.</span></li>
+          <li><span><b>Replicate.</b> The same unit goes to a second device. Matching results are validated; mismatches go to a tie-breaker and cost the liar trust.</span></li>
+          <li><span><b>Pass.</b> The host site's backend redeems a one-time signed token via <code>/api/siteverify</code>.</span></li>
+        </ol>
+        <p class="muted small" style="margin-top:22px">
+          Honest caveat: a few seconds per CAPTCHA is a tiny amount of science, and bots have cheap CPUs.
+          The PoW and rate limits are the bot gate. The folding is a bonus, kept honest by replication and known-answer spot checks.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2>Create an account <span class="muted small">(demo site)</span></h2>
+        <form class="signup" id="signup">
+          <label class="field">Email <input type="email" name="email" required placeholder="you@example.com" autocomplete="email" /></label>
+          <label class="field">Password <input type="password" name="password" required minlength="4" autocomplete="new-password" /></label>
+          <fold-captcha site-key="demo-site-key"></fold-captcha>
+          <div class="legend"><span><i class="h"></i>hydrophobic (H)</span><span><i class="p"></i>polar (P)</span><span><i class="c"></i>H–H contact</span></div>
+          <button class="btn" type="submit" disabled>Sign up</button>
+          <div id="result" class="notice" hidden></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    const form = document.getElementById('signup');
+    const btn = form.querySelector('button[type=submit]');
+    const out = document.getElementById('result');
+    const captcha = form.querySelector('fold-captcha');
+    captcha.addEventListener('solved', () => (btn.disabled = false));
+    captcha.addEventListener('expired', () => (btn.disabled = true));
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      const data = new FormData(form);
+      // The form posts to the host site's backend, which calls /api/siteverify.
+      const r = await fetch('/demo/signup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: data.get('email'), token: data.get('fold-captcha-token') }),
+      });
+      const j = await r.json();
+      out.hidden = false;
+      out.className = 'notice ' + (j.ok ? 'ok' : 'err');
+      out.textContent = j.message;
+    });
+  </script>
+</body>
+</html>
