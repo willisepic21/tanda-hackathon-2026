@@ -5,21 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FoldPass: a CAPTCHA that puts the work to use</title>
   <meta name="description" content="FoldPass checks that visitors are human and puts the effort toward citizen science and protein-folding research." />
-  <link rel="stylesheet" href="/css/site.css" />
-  <script type="module" src="/sdk/foldpass.esm.js"></script>
+  <link rel="stylesheet" href="css/site.css" />
+  <script src="config.js"></script>
+  <script type="module" src="sdk/foldpass.esm.js"></script>
 </head>
 <body>
   <header class="site-header">
     <div class="inner">
-      <a class="wordmark" href="/" aria-label="FoldPass home">
+      <a class="wordmark" href="./" aria-label="FoldPass home">
         <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true"><path d="M6 22 V14 H14 V6 H22 V14" fill="none" stroke="#1f2429" stroke-width="2" stroke-linejoin="round" opacity=".4"/><circle cx="6" cy="22" r="3.4" fill="#e4572e"/><circle cx="6" cy="14" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="14" cy="14" r="3.4" fill="#e4572e"/><circle cx="14" cy="6" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="22" cy="6" r="3.4" fill="#e4572e"/><circle cx="22" cy="14" r="3.4" fill="#e4572e"/></svg>
         FoldPass
       </a>
       <nav aria-label="Main">
-        <a href="/" aria-current="page">Overview</a>
-        <a href="/dashboard">Network</a>
-        <a href="/volunteer">Contribute</a>
-        <a href="/data">Data</a>
+        <a href="./" aria-current="page">Overview</a>
+        <a href="dashboard.html">Network</a>
+        <a href="volunteer.html">Contribute</a>
+        <a href="data.html">Data</a>
       </nav>
     </div>
   </header>
@@ -35,7 +36,7 @@
         </p>
         <div class="actions">
           <a class="btn" href="#integrate">Add it to your site</a>
-          <a class="btn secondary" href="/data">See the results</a>
+          <a class="btn secondary" href="data.html">See the results</a>
         </div>
       </div>
 
@@ -94,16 +95,16 @@
         </ul>
       </div>
       <pre class="code"><span class="c">&lt;!-- In the page --&gt;</span>
-&lt;script src="https://foldpass.example/sdk/foldpass.js" async defer&gt;&lt;/script&gt;
+&lt;script src="https://foldpass-tanda.fly.dev/sdk/foldpass.js" async defer&gt;&lt;/script&gt;
 
 &lt;form action="/signup" method="post"&gt;
   …
-  &lt;div class="foldpass" data-sitekey="YOUR_SITE_KEY"
+  &lt;div class="foldpass" data-sitekey="demo-site-key"
        data-task="classify"&gt;&lt;/div&gt;
 &lt;/form&gt;
 
 <span class="c">// On your server</span>
-const r = await fetch('https://foldpass.example/api/siteverify', {
+const r = await fetch('https://foldpass-tanda.fly.dev/api/siteverify', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify({ token, secret: process.env.FOLDPASS_SECRET }),
@@ -131,7 +132,7 @@ if (!r.success) return reject(r.reason);</pre>
         <div class="fold-key" aria-label="Fold key">
           <span><i class="h"></i>Hydrophobic residue</span><span><i class="p"></i>Polar residue</span><span><i class="c"></i>Contact between hydrophobic residues</span>
         </div>
-        <p style="margin-top:14px"><a href="/data">Browse and download the results</a></p>
+        <p style="margin-top:14px"><a href="data.html">Browse and download the results</a></p>
       </div>
     </section>
 
@@ -148,13 +149,14 @@ if (!r.success) return reject(r.reason);</pre>
   <footer class="site-footer">
     <div class="inner">
       <span>FoldPass is a prototype built for the Tanda hackathon. Results are released under CC0.</span>
-      <a href="/data">Data</a>
+      <a href="data.html">Data</a>
       <a href="#privacy">Privacy</a>
     </div>
   </footer>
 
   <script type="module">
-    import { FoldAnimator } from '/js/fold-render.js';
+    import { FoldAnimator } from './js/fold-render.js';
+    import { API_BASE } from './js/client.js';
 
     const form = document.getElementById('signup');
     const btn = form.querySelector('button[type=submit]');
@@ -179,7 +181,7 @@ if (!r.success) return reject(r.reason);</pre>
       btn.disabled = true;
       const data = new FormData(form);
       // The form goes to the site's own backend, which calls /api/siteverify.
-      const r = await fetch('/demo/signup', {
+      const r = await fetch(`${API_BASE}/demo/signup`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email: data.get('email'), token: data.get('fold-captcha-token') }),
@@ -191,7 +193,7 @@ if (!r.success) return reject(r.reason);</pre>
     });
 
     // Draw the longest sequence the network has a validated fold for.
-    fetch('/api/stats')
+    fetch(`${API_BASE}/api/stats`)
       .then((r) => r.json())
       .then((d) => {
         const b = d.benchmarks.filter((x) => x.best).sort((x, y) => y.sequence.length - x.sequence.length)[0];

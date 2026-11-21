@@ -71,7 +71,7 @@ Every validated unit is appended to `data/results/validated.jsonl`: a permanent,
 ## Embedding on another site
 
 ```html
-<script src="https://YOUR-FOLDPASS-HOST/sdk/foldpass.js" async defer></script>
+<script src="https://foldpass-tanda.fly.dev/sdk/foldpass.js" async defer></script>
 <div class="foldpass" data-sitekey="demo-site-key" data-callback="onFolded"></div>
 ```
 

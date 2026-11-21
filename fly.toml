@@ -1,0 +1,38 @@
+# Fly.io config for the FoldPass API (also serves the site itself).
+app = "foldpass-tanda"
+primary_region = "syd"
+kill_signal = "SIGINT" # the server flushes state.json on SIGINT
+kill_timeout = "10s"
+
+[build]
+
+[env]
+  HOST = "0.0.0.0"
+  PORT = "8080"
+  DATA_DIR = "/data"
+  TRUST_PROXY = "1"
+
+# State, the results archive and the HMAC key live on this volume.
+# Everything is in one process with a JSON file, so run exactly one Machine.
+[mounts]
+  source = "foldpass_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/api/citizen"
+    timeout = "8s"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

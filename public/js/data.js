@@ -1,4 +1,4 @@
-import { api, fmt, esc } from './client.js';
+import { api, fmt, esc, API_BASE } from './client.js';
 import { drawFold } from './fold-render.js';
 
 const $ = (id) => document.getElementById(id);
@@ -150,12 +150,12 @@ function folds(b) {
 }
 
 async function record(b) {
-  $('benchDownload').href = `/api/data/validated.jsonl?download&benchmark=${encodeURIComponent(b.id)}`;
+  $('benchDownload').href = `${API_BASE}/api/data/validated.jsonl?download&benchmark=${encodeURIComponent(b.id)}`;
   if (!b.units) {
     $('record').textContent = 'No validated units for this sequence yet.';
     return;
   }
-  const text = await (await fetch(`/api/data/validated.jsonl?benchmark=${encodeURIComponent(b.id)}`)).text();
+  const text = await (await fetch(`${API_BASE}/api/data/validated.jsonl?benchmark=${encodeURIComponent(b.id)}`)).text();
   const last = text.trim().split('\n').pop();
   const rec = JSON.parse(last);
   // Keep the histogram on one line so the record stays readable.
@@ -185,6 +185,9 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => summary && chart(summary.benchmarks.find((x) => x.id === selected)), 150);
 });
+
+// Download links live on the API host, which may differ from this page's host.
+for (const a of document.querySelectorAll('[data-api-href]')) a.href = API_BASE + a.dataset.apiHref;
 
 async function citizen() {
   const c = await api('/api/citizen');
@@ -217,7 +220,7 @@ async function citizen() {
           .map((a, i) => `<div><span>${esc(a)}</span><span class="track"><i style="width:${(r.votes[i] / max) * 100}%"></i></span><b>${r.votes[i]}</b></div>`)
           .join('');
         const status = r.status === 'consensus' ? `consensus: ${esc(w.answers[r.consensus])}` : r.status === 'ambiguous' ? 'ambiguous' : `${r.counted} answer${r.counted > 1 ? 's' : ''} so far`;
-        return `<figure class="subject"><img src="${esc(r.image)}" alt="Photo ${esc(r.id)}" loading="lazy" /><div class="votes">${bars}</div><figcaption class="muted" style="margin-top:4px">Photo ${esc(r.id)}: ${status}</figcaption></figure>`;
+        return `<figure class="subject"><img src="${esc(r.image.replace("large", "small"))}" alt="Photo ${esc(r.id)}" loading="lazy" /><div class="votes">${bars}</div><figcaption class="muted" style="margin-top:4px">Photo ${esc(r.id)}: ${status}</figcaption></figure>`;
       })
       .join('') || '<p class="muted small">No answers yet. Try the classify CAPTCHA on the demo page.</p>';
 }

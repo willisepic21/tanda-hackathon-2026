@@ -1,7 +1,7 @@
 // FoldPass server-side SDK for Node 18+ (uses global fetch, no dependencies).
 //
 //   import { createVerifier } from './foldpass-server.js';
-//   const foldpass = createVerifier({ secret: process.env.FOLDPASS_SECRET, host: 'https://foldpass.example', hostnames: ['mysite.com'] });
+//   const foldpass = createVerifier({ secret: process.env.FOLDPASS_SECRET, host: 'https://foldpass-tanda.fly.dev', hostnames: ['mysite.com'] });
 //   const r = await foldpass.verify(req.body['fold-captcha-token']);
 //   if (!r.success) return res.status(403).send(r.reason);
 //

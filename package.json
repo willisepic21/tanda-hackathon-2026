@@ -4,10 +4,13 @@
   "description": "A CAPTCHA that donates compute to HP lattice protein folding, with 2-device result replication.",
   "type": "module",
   "private": true,
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server/index.js",
     "test": "node --test",
-    "reproduce": "node scripts/reproduce.js"
+    "reproduce": "node scripts/reproduce.js",
+    "build:pages": "node scripts/build-pages.js"
   }
 }

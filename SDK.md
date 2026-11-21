@@ -20,7 +20,7 @@ node examples/third-party/server.js http://localhost:8080 5173
 **Markup only** (reCAPTCHA-style):
 
 ```html
-<script src="https://FOLDPASS-HOST/sdk/foldpass.js" async defer></script>
+<script src="https://foldpass-tanda.fly.dev/sdk/foldpass.js" async defer></script>
 
 <form action="/signup" method="post">
   <input name="email" />
@@ -61,7 +61,7 @@ await widget.execute();   // trigger it programmatically
 
 ```js
 // ES module: render is synchronous
-import FoldPass from 'https://FOLDPASS-HOST/sdk/foldpass.esm.js';
+import FoldPass from 'https://foldpass-tanda.fly.dev/sdk/foldpass.esm.js';
 const widget = FoldPass.render(document.querySelector('#captcha'), { siteKey: 'YOUR_SITE_KEY' });
 ```
 
@@ -88,7 +88,7 @@ Never trust the browser. Always redeem the token server-side. Tokens are single-
 import { createVerifier } from './foldpass-server.js';
 
 const foldpass = createVerifier({
-  host: 'https://FOLDPASS-HOST',
+  host: 'https://foldpass-tanda.fly.dev',
   secret: process.env.FOLDPASS_SECRET,
   hostnames: ['mysite.com'],      // reject tokens solved on other sites
 });
@@ -102,7 +102,7 @@ app.post('/signup', express.json(), foldpass.middleware(), handler);  // 403s on
 The verifier fails closed: if FoldPass can't be reached, `success` is `false`. Any other language can call the HTTP endpoint directly:
 
 ```bash
-curl -X POST https://FOLDPASS-HOST/api/siteverify -H 'content-type: application/json' \
+curl -X POST https://foldpass-tanda.fly.dev/api/siteverify -H 'content-type: application/json' \
   -d '{"token":"<token>","secret":"<secret>"}'
 ```
 

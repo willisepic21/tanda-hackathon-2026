@@ -18,6 +18,17 @@
         "5173"
       ],
       "port": 5173
+    },
+    {
+      "name": "pages-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/preview-pages.js",
+        "4173",
+        "/tanda-hackathon-2026/"
+      ],
+      "port": 4173,
+      "autoPort": false
     }
   ]
 }

@@ -1,6 +1,6 @@
 // FoldPass browser SDK (ES module).
 //
-//   import FoldPass from 'https://YOUR-FOLDPASS-HOST/sdk/foldpass.esm.js';
+//   import FoldPass from 'https://foldpass-tanda.fly.dev/sdk/foldpass.esm.js';
 //   FoldPass.render('#captcha', { siteKey: 'demo-site-key', onSuccess: (token) => … });
 //   const token = await FoldPass.execute({ siteKey: 'demo-site-key' });   // invisible
 //   const v = FoldPass.volunteer({ threads: 2 }); v.start();               // opt-in donation
@@ -429,7 +429,7 @@ export class FoldCaptchaElement extends HTMLElement {
         this.$('.count').textContent = c.items.length > 1 ? `${i + 1} of ${c.items.length}` : '';
         img.alt = `Photo ${i + 1} of ${c.items.length}`;
         img.onerror = () => reject(new FoldPassError('The photo failed to load', 'IMAGE'));
-        img.src = c.items[i].image;
+        img.src = c.items[i].image.replace("large", "small");
         group.replaceChildren(
           ...c.answers.map((label, k) => {
             const b = document.createElement('button');

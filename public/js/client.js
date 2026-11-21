@@ -2,7 +2,9 @@
 // Resolves the API origin from this file's URL so the widget also works when
 // embedded on a different site.
 
-export const API_BASE = new URL('..', import.meta.url).href.replace(/\/$/, '');
+// The FoldPass API host. Pages that set window.FOLDPASS_API (see config.js)
+// talk to that server; otherwise it's wherever these scripts were loaded from.
+export const API_BASE = (globalThis.FOLDPASS_API || new URL('..', import.meta.url).href).replace(/\/$/, '');
 
 export async function api(path, body) {
   const r = await fetch(API_BASE + path, {

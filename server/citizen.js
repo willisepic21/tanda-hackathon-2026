@@ -105,7 +105,7 @@ export class CitizenScience {
           if (typeof image !== 'string' || !/^https:\/\//.test(image)) continue;
           this.s.subjects[sub.id] = {
             id: String(sub.id),
-            image,
+            image: image.replace("large", "small"),
             votes: this.workflow.answers.map(() => 0),
             counted: 0,
             unverified: 0,
