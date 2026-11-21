@@ -95,7 +95,7 @@
         </ul>
       </div>
       <pre class="code"><span class="c">&lt;!-- In the page --&gt;</span>
-&lt;script src="https://foldpass.example/sdk/foldpass.js" async defer&gt;&lt;/script&gt;
+&lt;script src="https://foldpass-tanda.fly.dev/sdk/foldpass.js" async defer&gt;&lt;/script&gt;
 
 &lt;form action="/signup" method="post"&gt;
   …
@@ -104,7 +104,7 @@
 &lt;/form&gt;
 
 <span class="c">// On your server</span>
-const r = await fetch('https://foldpass.example/api/siteverify', {
+const r = await fetch('https://foldpass-tanda.fly.dev/api/siteverify', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify({ token, secret: process.env.FOLDPASS_SECRET }),

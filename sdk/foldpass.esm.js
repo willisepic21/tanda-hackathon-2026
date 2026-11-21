@@ -1,6 +1,6 @@
 // FoldPass browser SDK (ES module).
 //
-//   import FoldPass from 'https://YOUR-FOLDPASS-HOST/sdk/foldpass.esm.js';
+//   import FoldPass from 'https://foldpass-tanda.fly.dev/sdk/foldpass.esm.js';
 //   FoldPass.render('#captcha', { siteKey: 'demo-site-key', onSuccess: (token) => … });
 //   const token = await FoldPass.execute({ siteKey: 'demo-site-key' });   // invisible
 //   const v = FoldPass.volunteer({ threads: 2 }); v.start();               // opt-in donation

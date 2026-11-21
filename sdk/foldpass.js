@@ -1,6 +1,6 @@
 /*! FoldPass SDK loader: classic <script> entry point.
  *
- *   <script src="https://YOUR-FOLDPASS-HOST/sdk/foldpass.js" async defer></script>
+ *   <script src="https://foldpass-tanda.fly.dev/sdk/foldpass.js" async defer></script>
  *   <div class="foldpass" data-sitekey="demo-site-key" data-callback="onFolded"></div>
  *
  * Exposes window.FoldPass. Every method returns a Promise because the SDK
