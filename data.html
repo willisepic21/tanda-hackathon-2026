@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Results data | FoldPass</title>
+  <link rel="stylesheet" href="css/site.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <a class="wordmark" href="./" aria-label="FoldPass home">
+        <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true"><path d="M6 22 V14 H14 V6 H22 V14" fill="none" stroke="#1f2429" stroke-width="2" stroke-linejoin="round" opacity=".4"/><circle cx="6" cy="22" r="3.4" fill="#e4572e"/><circle cx="6" cy="14" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="14" cy="14" r="3.4" fill="#e4572e"/><circle cx="14" cy="6" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="22" cy="6" r="3.4" fill="#e4572e"/><circle cx="22" cy="14" r="3.4" fill="#e4572e"/></svg>
+        FoldPass
+      </a>
+      <nav aria-label="Main">
+        <a href="./">Overview</a>
+        <a href="dashboard.html">Network</a>
+        <a href="volunteer.html">Contribute</a>
+        <a href="data.html" aria-current="page">Data</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-head">
+      <h1>Results data</h1>
+      <p>
+        Everything FoldPass visitors produce is kept here, in files you can download and check. Fold results
+        are kept once two devices agree on them. Photo answers are kept with their vote totals.
+      </p>
+    </div>
+
+    <ol class="pipeline" aria-label="How a fold result reaches the dataset">
+      <li><b>Solve</b>A device folds a unit from its sequence, seed and attempt count.</li>
+      <li><b>Check</b>The server confirms the fold is valid and its numbers add up.</li>
+      <li><b>Repeat</b>A second device must return exactly the same result.</li>
+      <li><b>Keep</b>The result is appended to <code>validated.jsonl</code>, with device IDs hashed.</li>
+      <li><b>Publish</b>Download it below and re-run it with <code>npm run reproduce</code>.</li>
+    </ol>
+
+    <section>
+      <dl class="figures" id="tiles"></dl>
+      <div class="downloads" style="margin-top:18px">
+        <a class="btn" href="#" data-api-href="/api/data/validated.jsonl?download" download>Download validated units (JSONL)</a>
+        <a class="btn secondary" href="#" data-api-href="/api/data/best-folds.csv?download" download>Best folds (CSV)</a>
+        <a class="btn secondary" href="#" data-api-href="/api/data/summary.json" target="_blank" rel="noopener">Summary (JSON)</a>
+      </div>
+      <p class="small muted" style="margin-top:10px">Released under CC0. The file format is described in <code>DATA.md</code>.</p>
+    </section>
+
+    <section>
+      <div class="explorer-head">
+        <h2 style="margin:0">Explore a sequence</h2>
+        <select id="bench" aria-label="Sequence"></select>
+        <a class="small" id="benchDownload" href="#" download>Download this sequence</a>
+      </div>
+      <p class="seqline" id="seqline"></p>
+
+      <div class="two-col">
+        <div class="chartwrap">
+          <h3>Conformations sampled, by hydrophobic contacts</h3>
+          <p class="small muted">Log scale. More contacts means lower energy. Counts are raw output of the sampler, merged across validated units.</p>
+          <div class="chart" id="chart"></div>
+          <div class="tooltip" id="tip" hidden></div>
+          <button class="linkbtn" id="tableToggle" aria-expanded="false">Show as a table</button>
+          <div id="table" hidden></div>
+        </div>
+        <div>
+          <h3>Lowest-energy distinct folds</h3>
+          <p class="small muted">Mirror images count as one fold. "Found by" is how many separate units reached it.</p>
+          <div class="folds" id="folds"></div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:28px">Example record</h3>
+      <pre class="record" id="record">No validated units for this sequence yet.</pre>
+    </section>
+
+    <section id="citizen">
+      <div class="section-head"><h2>Photo answers</h2></div>
+      <p class="muted" id="citizenIntro" style="max-width:70ch">Loading…</p>
+      <dl class="figures" id="citizenTiles"></dl>
+      <div class="downloads" style="margin-top:18px">
+        <a class="btn secondary" href="#" data-api-href="/api/data/citizen-consensus.csv?download" download>Vote totals per photo (CSV)</a>
+        <a class="btn secondary" href="#" data-api-href="/api/data/classifications.jsonl?download" download>Every answer (JSONL)</a>
+      </div>
+      <h3 style="margin-top:28px">Recently answered photos</h3>
+      <div class="subjects" id="subjects"></div>
+    </section>
+
+    <section>
+      <h2>Check it yourself</h2>
+      <p class="muted">The folding search is deterministic, so anyone can re-run archived units and confirm every result matches.</p>
+      <pre class="code">npm run reproduce                                 <span class="c"># 10 random units from the local archive</span>
+node scripts/reproduce.js validated.jsonl --all   <span class="c"># every unit in a downloaded file</span></pre>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="inner">
+      <span>FoldPass is a prototype built for the Tanda hackathon. Results are released under CC0.</span>
+      <a href="data.html">Data</a>
+      <a href="./#privacy">Privacy</a>
+    </div>
+  </footer>
+
+  <script type="module" src="js/data.js"></script>
+</body>
+</html>

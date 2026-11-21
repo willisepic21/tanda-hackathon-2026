@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contribute computing time | FoldPass</title>
+  <link rel="stylesheet" href="css/site.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <a class="wordmark" href="./" aria-label="FoldPass home">
+        <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true"><path d="M6 22 V14 H14 V6 H22 V14" fill="none" stroke="#1f2429" stroke-width="2" stroke-linejoin="round" opacity=".4"/><circle cx="6" cy="22" r="3.4" fill="#e4572e"/><circle cx="6" cy="14" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="14" cy="14" r="3.4" fill="#e4572e"/><circle cx="14" cy="6" r="3.2" fill="#fff" stroke="#1f8a84" stroke-width="1.8"/><circle cx="22" cy="6" r="3.4" fill="#e4572e"/><circle cx="22" cy="14" r="3.4" fill="#e4572e"/></svg>
+        FoldPass
+      </a>
+      <nav aria-label="Main">
+        <a href="./">Overview</a>
+        <a href="dashboard.html">Network</a>
+        <a href="volunteer.html" aria-current="page">Contribute</a>
+        <a href="data.html">Data</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-head">
+      <h1>Contribute computing time</h1>
+      <p>
+        Leave this page open on a laptop or phone and it will fold work units until you stop it. Every unit also
+        runs on a second device, and a result is kept only when both match. Phones get smaller units.
+      </p>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="toggle">Start contributing</button>
+      <label for="threads">Threads
+        <input type="range" id="threads" min="1" max="8" value="2" />
+        <b id="threadsVal">2</b>
+      </label>
+      <label title="Gives each thread its own device identity, so one computer can show two-device validation. Leave off for real use.">
+        <input type="checkbox" id="simulate" /> Treat each thread as a separate device (demo)
+      </label>
+      <span class="totals" id="totals">Nothing contributed yet</span>
+    </div>
+    <p class="small muted" id="mobileNote" hidden style="margin-top:10px">This looks like a phone, so it gets one thread and smaller units to save battery.</p>
+
+    <div class="threads" id="threadCards"></div>
+
+    <section style="margin-top:40px">
+      <div class="section-head"><h2>Activity</h2><p class="small muted" id="whoami"></p></div>
+      <ul class="log" id="log"><li><span></span><span class="muted">Press Start contributing to begin.</span></li></ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="inner">
+      <span>FoldPass is a prototype built for the Tanda hackathon. Results are released under CC0.</span>
+      <a href="data.html">Data</a>
+      <a href="./#privacy">Privacy</a>
+    </div>
+  </footer>
+
+  <script type="module" src="js/volunteer.js"></script>
+</body>
+</html>
